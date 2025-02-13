@@ -1,0 +1,22 @@
+﻿  pong.cpp
+D:\!!!!43234235\pong\pong\pong.cpp(57,29): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(62,34): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(111,13): warning C4101: 'hbm': unreferenced local variable
+D:\!!!!43234235\pong\pong\pong.cpp(140,92): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(140,78): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(140,68): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(140,41): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(148,31): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(151,83): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(151,69): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(151,40): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(152,86): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(152,72): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(152,58): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(152,39): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(157,16): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(158,16): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(188,30): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(190,33): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+D:\!!!!43234235\pong\pong\pong.cpp(210,46): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  pong.vcxproj -> D:\!!!!43234235\pong\Debug\pong.exe
