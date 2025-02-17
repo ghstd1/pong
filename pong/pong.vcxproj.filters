@@ -15,8 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pong.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Debug\back.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Debug\ball.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Debug\racket.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Debug\racket_enemy.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="..\Debug\bounce.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="..\Debug\fail.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="..\Debug\music.mp3" />
   </ItemGroup>
 </Project>
