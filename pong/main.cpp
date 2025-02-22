@@ -1,6 +1,7 @@
 //linker::system::subsystem  - Windows(/ SUBSYSTEM:WINDOWS)
 //configuration::advanced::character set - not set
 //linker::input::additional dependensies Msimg32.lib; Winmm.lib
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "windows.h"
 
@@ -8,7 +9,35 @@
 #include <gdiplus.h>
 #include <math.h>
 
+int timeout = 10000;
+int time;
+int currenttime=0;
+int starttime = 0;
+
 void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha = false, bool rotate = false, float angle = 0);
+
+struct {
+    float x, y, width, height, speed;
+    HBITMAP hBitmap;//хэндл к спрайту шарика
+
+    void Load()
+    {
+
+    }
+
+    void Show()
+    {
+
+    }
+
+    void getDim()
+    {
+
+    }
+
+
+} car;
+
 
 void RotatedBlt(HDC hDC, HDC hMemDC, float x, float y, float width, float height, float angle, float bitmapWidth, float bitmapHeight)
 {
@@ -29,15 +58,6 @@ void RotatedBlt(HDC hDC, HDC hMemDC, float x, float y, float width, float height
     PlgBlt(hDC, point, hMemDC, 0, 0, bitmapWidth, bitmapHeight, NULL, 0, 0);
 }
 
-void ShowConsoleCursor(bool showFlag) //функция убирает мигающий курсор консоли
-{
-    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);//хэндл стандартного вывода
-    CONSOLE_CURSOR_INFO     cursorInfo;//структура хранит информацию о курсоре
-    GetConsoleCursorInfo(out, &cursorInfo);//получаем информацию о курсоре в струкутру CONSOLE_CURSOR_INFO
-    cursorInfo.bVisible = showFlag;//изменяем ее
-    SetConsoleCursorInfo(out, &cursorInfo);//сохраняем
-}
-
 
 POINT GetBitmapDimension(HBITMAP bmp) {
     BITMAP bm;
@@ -49,26 +69,6 @@ POINT GetBitmapDimension(HBITMAP bmp) {
     return dms;
 }
 
-// секция данных игры
-//struct {
-//    float x, y, width, height, speed;
-//    HBITMAP hBitmap;//хэндл к спрайту ракетки
-//} racket;
-//
-//struct {
-//    float x;
-//    HBITMAP hBitmap;//хэндл к спрайту ракетки противника
-//} enemy;
-//
-//struct {
-//    float x, y, rad, dx, dy, speed;
-//    HBITMAP hBitmap;//хэндл к спрайту шарика
-//} ball;
-
-struct {
-    float x        , y, width, height, speed;
-    HBITMAP hBitmap;//хэндл к спрайту шарика
-} car;
 
 struct {
     int score, balls;//количество набранных очков и оставшихся "жизней"
@@ -168,26 +168,24 @@ void ShowScore()
     auto hTmp = (HFONT)SelectObject(window.context, hFont);
 
     char txt[256];//буфер для текста
-    char chkpts[] = "Chkpts";
+    char chkpts[] = "Chkpts ";
     char you_won[] = "YOU WON";
-    _itoa_s(nextCP_num, txt, 18);//преобразование числовой переменной в текст. текст окажется в переменной txt
-    TextOutA(window.context, 10, 10, chkpts, 5);
-    TextOutA(window.context, 200, 10, txt, 2);
-    TextOutA(window.context, 230, 10, "/18", 5);
+    _itoa_s(nextCP_num, txt, 10);//преобразование числовой переменной в текст. текст окажется в переменной txt
+
+    char outstr[255];
+    strcpy(outstr, chkpts);
+    strcat(outstr, txt);
+    strcat(outstr, "/18");
+    TextOutA(window.context, 10, 10, outstr, strlen(outstr));
+
+
+    char time_txt[256];
+    _itoa(time, time_txt, 10);
+    TextOutA(window.context, 400, 10, time_txt, strlen(time_txt));
 
     if (nextCP_num > 18) {
         TextOutA(window.context, window.width / 2, window.height / 2, you_won, 7);
     }
-
-
-    //char txt2[32];
-    //_itoa_s(carPos_color[0], txt2, 10);
-    //TextOutA(window.context, 230, 110, txt2, 5);
-
-
-    //_itoa_s(game.balls, txt, 10);
-    //TextOutA(window.context, 10, 100, "Balls", 5);
-    //TextOutA(window.context, 200, 100, (LPCSTR)txt, strlen(txt));
 }
 
 float rotate_speed = 0;
@@ -230,6 +228,7 @@ void ProcessInput()
     
     movement_speed *= 0.91;
 
+    //slow down if outside of track
     //POINT p;
     //GetCursorPos(&p);
     //ScreenToClient(window.console_handle,&p);
@@ -311,104 +310,16 @@ void ShowRacketAndBall()
 
 
     if (length < 19) {
+
+        timeout += 5000;
+
         nextCP_num++;
     }
 }
 
 void RotateFutureCar() {
     ShowBitmap(window.context, car.x - car.width / 2., car.y - car.height / 2, car.width, car.height, car.hBitmap, false, true, angle);
-    //angle += 1;
-    //RotatedBlt(window.device_context, test.hBitmap, test.x, test.y, test.width, test.height, 3.0, 256.0, 256.0);
 }
-
-//void LimitRacket() 
-//{
-//    racket.x = max(racket.x, racket.width / 2.);//если коодината левого угла ракетки меньше нуля, присвоим ей ноль
-//    racket.x = min(racket.x, window.width - racket.width / 2.);//аналогично для правого угла
-//}
-//
-//void CheckWalls()
-//{
-//    if (ball.x < ball.rad || ball.x > window.width - ball.rad)
-//    {
-//        ball.dx *= -1;
-//        ProcessSound("bounce.wav");
-//    }
-//}
-//
-//void CheckRoof()
-//{
-//    if (ball.y < ball.rad+racket.height)
-//    {
-//        ball.dy *= -1;
-//        ProcessSound("bounce.wav");
-//    }
-//}
-//
-//bool tail = false;
-//
-//void CheckFloor()
-//{
-//    if (ball.y > window.height - ball.rad - racket.height)//шарик пересек линию отскока - горизонталь ракетки
-//    {
-//        if (!tail && ball.x >= racket.x - racket.width / 2.-ball.rad && ball.x <= racket.x + racket.width / 2.+ball.rad)//шарик отбит, и мы не в режиме обработки хвоста
-//        {
-//            game.score++;//за каждое отбитие даем одно очко
-//            ball.speed += 5. / game.score;//но увеличиваем сложность - прибавляем скорости шарику
-//            ball.dy *= -1;//отскок
-//            racket.width -= 10. / game.score;//дополнительно уменьшаем ширину ракетки - для сложности
-//            ProcessSound("bounce.wav");//играем звук отскока
-//        }
-//        else
-//        {//шарик не отбит
-//
-//            tail = true;//дадим шарику упасть ниже ракетки
-//
-//            if (ball.y -ball.rad> window.height)//если шарик ушел за пределы окна
-//            {
-//                game.balls--;//уменьшаем количество "жизней"
-//
-//                    ProcessSound("fail.wav");//играем звук
-//
-//                    if (game.balls < 0) { //проверка условия окончания "жизней"
-//
-//                        MessageBoxA(window.console_handle, "game over", "", MB_OK);//выводим сообщение о проигрыше
-//                        InitGame();//переинициализируем игру
-//                    }
-//
-//                ball.dy = (rand() % 65 + 35) / 100.;//задаем новый случайный вектор для шарика
-//                ball.dx = -(1 - ball.dy);
-//                ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
-//                ball.y = racket.y - ball.rad;
-//                game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
-//                tail = false;
-//            }
-//        }
-//    }
-//}
-//
-//void ProcessRoom()
-//{
-//    //обрабатываем стены, потолок и пол. принцип - угол падения равен углу отражения, а значит, для отскока мы можем просто инвертировать часть вектора движения шарика
-//    CheckWalls();
-//    CheckRoof();
-//    CheckFloor();
-//}
-//
-//void ProcessBall()
-//{
-//    if (game.action)
-//    {
-//        //если игра в активном режиме - перемещаем шарик
-//        ball.x += ball.dx * ball.speed;
-//        ball.y += ball.dy * ball.speed;
-//    }
-//    else
-//    {
-//        //иначе - шарик "приклеен" к ракетке
-//        ball.x = racket.x;
-//    }
-//}
 
 
 //-------
@@ -431,19 +342,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_ LPWSTR    lpCmdLine,
     _In_ int       nCmdShow)
-
-
 {
     SetProcessDPIAware();
     InitWindow();//здесь инициализируем все что нужно для рисования в окне
     InitGame();//здесь инициализируем переменные игры
 
-
     //mciSendString(TEXT("play ..\\Debug\\music.mp3 repeat"), NULL, 0, NULL);
     //ShowCursor(NULL);
     
+    starttime = timeGetTime();
+
     while (!GetAsyncKeyState(VK_ESCAPE))
     {
+        currenttime = timeGetTime()-starttime;
+        time = timeout - currenttime;
         ShowRacketAndBall();//рисуем фон, ракетку и шарик
         ShowScore();//рисуем очик и жизни
         RotateFutureCar();
@@ -451,9 +363,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         Sleep(16);//ждем 16 милисекунд (1/количество кадров в секунду)
 
         ProcessInput();//опрос клавиатуры
-        //LimitRacket();//проверяем, чтобы ракетка не убежала за экран
-        //ProcessBall();//перемещаем шарик
-        //ProcessRoom();//обрабатываем отскоки от стен и каретки, попадание шарика в картетку
     }
 
 }

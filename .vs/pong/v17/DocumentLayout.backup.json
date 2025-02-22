@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\user\\source\\repos\\ghstd1\\pong\\",
+  "WorkspaceRootPath": "C:\\Users\\student-2\\source\\repos\\pong\\r_pong\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{4031E865-2FCB-40C3-9E1F-DFC78A91D887}|pong\\pong.vcxproj|C:\\Users\\user\\source\\repos\\ghstd1\\pong\\pong\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{4031E865-2FCB-40C3-9E1F-DFC78A91D887}|pong\\pong.vcxproj|C:\\Users\\student-2\\source\\repos\\pong\\r_pong\\pong\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{4031E865-2FCB-40C3-9E1F-DFC78A91D887}|pong\\pong.vcxproj|solutionrelative:pong\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
@@ -36,11 +36,11 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "main.cpp",
-              "DocumentMoniker": "C:\\Users\\user\\source\\repos\\ghstd1\\pong\\pong\\main.cpp",
+              "DocumentMoniker": "C:\\Users\\student-2\\source\\repos\\pong\\r_pong\\pong\\main.cpp",
               "RelativeDocumentMoniker": "pong\\main.cpp",
-              "ToolTip": "C:\\Users\\user\\source\\repos\\ghstd1\\pong\\pong\\main.cpp",
-              "RelativeToolTip": "pong\\main.cpp",
-              "ViewState": "AgIAAKMAAAAAAAAAAAAAALQAAAAAAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\student-2\\source\\repos\\pong\\r_pong\\pong\\main.cpp*",
+              "RelativeToolTip": "pong\\main.cpp*",
+              "ViewState": "AgIAABQBAAAAAAAAAAAAAC8BAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-02-17T19:33:06.088Z",
               "EditorCaption": ""
