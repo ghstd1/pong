@@ -14,30 +14,20 @@ int time;
 int currenttime=0;
 int starttime = 0;
 
-void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha = false, bool rotate = false, float angle = 0);
+const int checkpointNum = 19;
+POINT checkpoint[checkpointNum];
 
 struct {
-    float x, y, width, height, speed;
-    HBITMAP hBitmap;//хэндл к спрайту шарика
+    HWND console_handle;//хэндл окна
+    HDC device_context, context;// два контекста устройства (для буферизации)
+    int width, height;//сюда сохраним размеры окна которое создаст программа
+} window;
 
-    void Load()
-    {
+void ShowBitmap(int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha = false, bool rotate = false, float angle = 0);
 
-    }
-
-    void Show()
-    {
-
-    }
-
-    void getDim()
-    {
-
-    }
-
-
-} car;
-
+float lerp(float a, float b, float x) {
+    return a * (1 - x) + b * x;
+}
 
 void RotatedBlt(HDC hDC, HDC hMemDC, float x, float y, float width, float height, float angle, float bitmapWidth, float bitmapHeight)
 {
@@ -58,6 +48,10 @@ void RotatedBlt(HDC hDC, HDC hMemDC, float x, float y, float width, float height
     PlgBlt(hDC, point, hMemDC, 0, 0, bitmapWidth, bitmapHeight, NULL, 0, 0);
 }
 
+HBITMAP LoadBMP(const char* name)
+{
+    return (HBITMAP)LoadImageA(NULL, name, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+}
 
 POINT GetBitmapDimension(HBITMAP bmp) {
     BITMAP bm;
@@ -70,28 +64,101 @@ POINT GetBitmapDimension(HBITMAP bmp) {
 }
 
 
+struct sprite_ {
+    float x, y, width, height, speed,angle;
+    HBITMAP hBitmap;//хэндл к спрайту шарика
+
+    void Load(const char* name)
+    {
+        hBitmap = LoadBMP(name);
+    }
+
+    void Show()
+    {
+        ShowBitmap(x - width / 2., y - height / 2, width, height, hBitmap, false, true, angle);
+    }
+
+    void SetDimentionsFromBMP()
+    {
+        POINT dim = GetBitmapDimension(hBitmap);
+        width = dim.x;
+        height = dim.y;
+    }
+};
+
+struct car_ {
+
+    sprite_ sprite;
+
+    float rotate_speed = 0;
+    float movement_speed = 0;
+    float movement_x = 0;
+    float movement_y = 0;
+    float max_speed = 7;
+
+    void setAngle(float a)
+    {
+        sprite.angle = a;
+    }
+
+    void init()
+    {
+        sprite.Load("car.bmp");
+        sprite.SetDimentionsFromBMP();
+        sprite.width /= 4;
+        sprite.height /= 4;
+        sprite.x = checkpoint[0].x + 30;
+        sprite.y = checkpoint[0].y + 10;
+    }
+
+    void processMovement()
+    {
+        rotate_speed *= 0.7;
+
+        if (movement_speed < 0) movement_speed = 0;
+        if (movement_speed > max_speed) movement_speed = max_speed;
+
+        float delta_x = sin(sprite.angle * 3.141519 / 180.) * movement_speed;
+        float delta_y = cos(sprite.angle * 3.141519 / 180.) * movement_speed;
+
+        float n_spd = .95 * movement_speed / max_speed;
+        n_spd = pow(n_spd, 2);
+
+        movement_x = lerp(movement_x, delta_x, 1 - n_spd);
+        movement_y = lerp(movement_y, delta_y, 1 - n_spd);
+
+        sprite.x += movement_x;
+        sprite.y += movement_y;
+
+        movement_speed *= 0.91;
+    }
+
+} ;
+
+car_ car;
+
+
+
+
+
+
+
 struct {
     int score, balls;//количество набранных очков и оставшихся "жизней"
     bool action = false;//состояние - ожидание (игрок должен нажать пробел) или игра
 } game;
 
-struct {
-    HWND console_handle;//хэндл окна
-    HDC device_context, context;// два контекста устройства (для буферизации)
-    int width, height;//сюда сохраним размеры окна которое создаст программа
-} window;
+
 
 HBITMAP hBack;// хэндл для фонового изображения
 
-float angle = 180;
-float max_speed = 7;
 
 int nextCP_num = 0;
 
 HBRUSH cpBrush;
 HBRUSH addl_cpBrush;
 
-POINT checkpoint[19];
+
 //cекция кода
 
 POINT track_dms;
@@ -104,26 +171,16 @@ void InitGame()
     //в этой секции загружаем спрайты с помощью функций gdi
     //пути относительные - файлы должны лежать рядом с .exe 
     //результат работы LoadImageA сохраняет в хэндлах битмапов, рисование спрайтов будет произовдиться с помощью этих хэндлов
-    car.hBitmap = (HBITMAP)LoadImageA(NULL, "car.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    hBack = (HBITMAP)LoadImageA(NULL, "racetrack_ps.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+    hBack = LoadBMP("racetrack_ps.bmp");
     track_dms = GetBitmapDimension(hBack);
+
     SetWindowPos(window.console_handle, HWND_TOPMOST, 0, 0, track_dms.x, track_dms.y, SWP_NOMOVE);
     window.width = track_dms.x;
     window.height = track_dms.y;
 
-    testDC = GetDC(window.console_handle);
-    ShowBitmap(testDC, 0, 0, track_dms.x, track_dms.y, hBack);
-
-    //hTrackDC = (HBITMAP)SelectObject(testDC, hBack);// Выбираем изображение bitmap в контекст памяти
     
-    //------------------------------------------------------
-
-    POINT car_dms = GetBitmapDimension(car.hBitmap);
-    car.width = car_dms.x / 4;
-    car.height = car_dms.y / 4;
-
-    srand(0);
-
+    //checkpoints
     checkpoint[0].x = 501; checkpoint[0].y = 795; //501, 795
     checkpoint[1].x = 410; checkpoint[1].y = 733; //410, 733
     checkpoint[2].x = 237; checkpoint[2].y = 520; //237, 520
@@ -147,8 +204,9 @@ void InitGame()
     checkpoint[17].x = 560; checkpoint[17].y = 548; //611, 709
     checkpoint[18].x = 587; checkpoint[18].y = 779; //587, 779
 
-    car.x = checkpoint[0].x + 30;
-    car.y = checkpoint[0].y + 10;
+    //car
+    car.init();
+
 
 }
 
@@ -188,45 +246,20 @@ void ShowScore()
     }
 }
 
-float rotate_speed = 0;
-float movement_speed = 0;
 
-float movement_x = 0;
-float movement_y = 0;
 
-float lerp(float a, float b, float x) {
-    return a * (1 - x) + b * x;
-}
+
 
 void ProcessInput()
 {
-    if (GetAsyncKeyState(VK_LEFT)) rotate_speed += 1;
-    if (GetAsyncKeyState(VK_RIGHT)) rotate_speed -= 1;
+    if (GetAsyncKeyState(VK_LEFT)) car.rotate_speed += 1;
+    if (GetAsyncKeyState(VK_RIGHT)) car.rotate_speed -= 1;
+    car.setAngle(car.sprite.angle + car.rotate_speed);
+     
+    float accel = (1 + log2(car.movement_speed + 1)) * .1;
+    if (GetAsyncKeyState(VK_UP)) car.movement_speed += accel;
+    if (GetAsyncKeyState(VK_DOWN)) car.movement_speed -= accel;
 
-    angle += rotate_speed;
-
-    rotate_speed *= 0.7;
-    float accel = (1 + log2(movement_speed + 1)) * .1;
-    if (GetAsyncKeyState(VK_UP)) movement_speed += accel;
-    if (GetAsyncKeyState(VK_DOWN)) movement_speed -= accel;
-
-    if (movement_speed < 0) movement_speed = 0;
-    if (movement_speed > max_speed) movement_speed = max_speed;
-
-    float delta_x = sin(angle * 3.141519 / 180.) * movement_speed;
-    float delta_y = cos(angle * 3.141519 / 180.) * movement_speed;
-
-    float n_spd = .95 * movement_speed / max_speed;
-    n_spd = pow(n_spd, 2);
-
-    movement_x = lerp(movement_x, delta_x, 1 - n_spd);
-    movement_y = lerp(movement_y, delta_y, 1 - n_spd);
-
-    car.x += movement_x;
-    car.y += movement_y;
-
-    
-    movement_speed *= 0.91;
 
     //slow down if outside of track
     //POINT p;
@@ -249,13 +282,13 @@ void ProcessInput()
 
 }
 
-void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha, bool rotate, float angle)
+void ShowBitmap(int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha, bool rotate, float angle)
 {
     HBITMAP hbm, hOldbm;
     HDC hMemDC;
     BITMAP bm;
 
-    hMemDC = CreateCompatibleDC(hDC); // Создаем контекст памяти, совместимый с контекстом отображения
+    hMemDC = CreateCompatibleDC(window.context); // Создаем контекст памяти, совместимый с контекстом отображения
     hOldbm = (HBITMAP)SelectObject(hMemDC, hBitmapBall);// Выбираем изображение bitmap в контекст памяти
 
     if (hOldbm) // Если не было ошибок, продолжаем работу
@@ -274,7 +307,7 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool
             }
             else
             {
-                StretchBlt(hDC, x, y, x1, y1, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY); // Рисуем изображение bitmap
+                StretchBlt(window.context, x, y, x1, y1, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY); // Рисуем изображение bitmap
             }
         }
 
@@ -284,10 +317,24 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool
     DeleteDC(hMemDC); // Удаляем контекст памяти
 }
 
-void ShowRacketAndBall()
+void controlChekpoint()
 {
-    ShowBitmap(window.context, 0, 0, track_dms.x, track_dms.y, hBack);//задний фон
+    float coordXdelta = checkpoint[nextCP_num].x - car.sprite.x;
+    float coordYdelta = checkpoint[nextCP_num].y - car.sprite.y;
 
+    float length = sqrt(coordXdelta * coordXdelta + coordYdelta * coordYdelta);
+
+    float margin = 19;
+    if (length < margin) {
+
+        timeout += 5000;
+
+        nextCP_num++;
+    }
+}
+
+void showCheckpoint()
+{
     if (!addl_cpBrush) addl_cpBrush = CreateSolidBrush(RGB(100, 0, 0));
     SelectObject(window.context, addl_cpBrush);
     float addl_rad = 20;
@@ -296,30 +343,21 @@ void ShowRacketAndBall()
     if (!cpBrush) cpBrush = CreateSolidBrush(RGB(100, 100, 0));
     SelectObject(window.context, cpBrush);
 
-    for (int i = 0; i < 19; i++)
+    for (int i = 0; i < checkpointNum; i++)
     {
         float rad = 5;
         Ellipse(window.context, checkpoint[i].x - rad, checkpoint[i].y - rad, checkpoint[i].x + rad, checkpoint[i].y + rad);
     }
-
-
-    float coordXdelta = checkpoint[nextCP_num].x - car.x;
-    float coordYdelta = checkpoint[nextCP_num].y - car.y;
-
-    float length = sqrt(coordXdelta * coordXdelta + coordYdelta * coordYdelta);
-
-
-    if (length < 19) {
-
-        timeout += 5000;
-
-        nextCP_num++;
-    }
 }
 
-void RotateFutureCar() {
-    ShowBitmap(window.context, car.x - car.width / 2., car.y - car.height / 2, car.width, car.height, car.hBitmap, false, true, angle);
+void showScene()
+{
+    ShowBitmap(0, 0, track_dms.x, track_dms.y, hBack);//задний фон
+    showCheckpoint();
+    controlChekpoint();
+    car.sprite.Show();
 }
+
 
 
 //-------
@@ -356,13 +394,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         currenttime = timeGetTime()-starttime;
         time = timeout - currenttime;
-        ShowRacketAndBall();//рисуем фон, ракетку и шарик
+        showScene();//рисуем фон, ракетку и шарик
         ShowScore();//рисуем очик и жизни
-        RotateFutureCar();
+        
         BitBlt(window.device_context, 0, 0, window.width, window.height, window.context, 0, 0, SRCCOPY);//копируем буфер в окно
         Sleep(16);//ждем 16 милисекунд (1/количество кадров в секунду)
 
         ProcessInput();//опрос клавиатуры
+        car.processMovement();
     }
 
 }
