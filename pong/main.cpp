@@ -29,6 +29,15 @@ void RotatedBlt(HDC hDC, HDC hMemDC, float x, float y, float width, float height
     PlgBlt(hDC, point, hMemDC, 0, 0, bitmapWidth, bitmapHeight, NULL, 0, 0);
 }
 
+void ShowConsoleCursor(bool showFlag) //функция убирает мигающий курсор консоли
+{
+    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);//хэндл стандартного вывода
+    CONSOLE_CURSOR_INFO     cursorInfo;//структура хранит информацию о курсоре
+    GetConsoleCursorInfo(out, &cursorInfo);//получаем информацию о курсоре в струкутру CONSOLE_CURSOR_INFO
+    cursorInfo.bVisible = showFlag;//изменяем ее
+    SetConsoleCursorInfo(out, &cursorInfo);//сохраняем
+}
+
 
 POINT GetBitmapDimension(HBITMAP bmp) {
     BITMAP bm;
@@ -82,7 +91,7 @@ int nextCP_num = 0;
 HBRUSH cpBrush;
 HBRUSH addl_cpBrush;
 
-POINT checkpoint[10];
+POINT checkpoint[19];
 //cекция кода
 
 POINT track_dms;
@@ -112,36 +121,34 @@ void InitGame()
     POINT car_dms = GetBitmapDimension(car.hBitmap);
     car.width = car_dms.x / 4;
     car.height = car_dms.y / 4;
-    car.x = window.width / 2;
-    car.y = window.height / 2;
 
     srand(0);
 
-    for (int i = 0; i < 10; i++)
-    {
-        checkpoint[i].x = rand() % track_dms.x;
-        checkpoint[i].y = rand() % track_dms.y;
+    checkpoint[0].x = 501; checkpoint[0].y = 795; //501, 795
+    checkpoint[1].x = 410; checkpoint[1].y = 733; //410, 733
+    checkpoint[2].x = 237; checkpoint[2].y = 520; //237, 520
+    checkpoint[3].x = 270; checkpoint[3].y = 429; //270, 429
+    checkpoint[4].x = 445; checkpoint[4].y = 381; //445, 381
 
-    }
+    checkpoint[5].x = 446; checkpoint[5].y = 301; //446, 301
+    checkpoint[6].x = 139; checkpoint[6].y = 272; //139, 272
+    checkpoint[7].x = 84;  checkpoint[7].y = 193; //84, 193
+    checkpoint[8].x = 128; checkpoint[8].y = 121; //128, 121
+    checkpoint[9].x = 463; checkpoint[9].y = 111; //463, 111
 
-    //racket.width = 300;
-    //racket.height = 120;
-    //racket.speed = 30;//скорость перемещения ракетки
-    //racket.x = window.width / 2.;//ракетка посередине окна
-    //racket.y = window.height - racket.height;//чуть выше низа экрана - на высоту ракетки
+    checkpoint[10].x = 538; checkpoint[10].y = 226; //538, 226
+    checkpoint[11].x = 707; checkpoint[11].y = 109; //707, 109
+    checkpoint[12].x = 756; checkpoint[12].y = 182; //756, 182
+    checkpoint[13].x = 706; checkpoint[13].y = 273; //706, 273
+    checkpoint[14].x = 592; checkpoint[14].y = 361; //592, 361
 
-    //enemy.x = racket.x;//х координату оппонета ставим в ту же точку что и игрока
+    checkpoint[15].x = 560; checkpoint[15].y = 425; //560, 425
+    checkpoint[16].x = 560; checkpoint[16].y = 548; //560, 548
+    checkpoint[17].x = 560; checkpoint[17].y = 548; //611, 709
+    checkpoint[18].x = 587; checkpoint[18].y = 779; //587, 779
 
-    //ball.dy = (rand() % 65 + 35) / 100.;//формируем вектор полета шарика
-    //ball.dx = -(1 - ball.dy);//формируем вектор полета шарика
-    //ball.speed = 11;
-    //ball.rad = 20;
-    //ball.x = racket.x;//x координата шарика - на середие ракетки
-    //ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
-    //
-
-    //game.score = 0;
-    //game.balls = 9;
+    car.x = checkpoint[0].x + 30;
+    car.y = checkpoint[0].y + 10;
 
 }
 
@@ -160,20 +167,22 @@ void ShowScore()
     auto hFont = CreateFont(70, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, "CALIBRI");
     auto hTmp = (HFONT)SelectObject(window.context, hFont);
 
-    char txt[32];//буфер для текста
-    _itoa_s(nextCP_num, txt, 10);//преобразование числовой переменной в текст. текст окажется в переменной txt
-    TextOutA(window.context, 10, 10, "Chkpts.", 5);
-    TextOutA(window.context, 200, 10, (LPCSTR)txt, strlen(txt));
-    TextOutA(window.context, 230, 10, "/10", 5);
+    char txt[256];//буфер для текста
+    char chkpts[] = "Chkpts";
+    char you_won[] = "YOU WON";
+    _itoa_s(nextCP_num, txt, 18);//преобразование числовой переменной в текст. текст окажется в переменной txt
+    TextOutA(window.context, 10, 10, chkpts, 5);
+    TextOutA(window.context, 200, 10, txt, 2);
+    TextOutA(window.context, 230, 10, "/18", 5);
 
-    if (nextCP_num > 10) {
-        //TextOutA(window.context, window.width / 2, window.height / 2, "YOU WIN!", 5);
+    if (nextCP_num > 18) {
+        TextOutA(window.context, window.width / 2, window.height / 2, you_won, 7);
     }
 
 
-    char txt2[32];
-    _itoa_s(carPos_color[0], txt2, 10);
-    TextOutA(window.context, 230, 110, txt2, 5);
+    //char txt2[32];
+    //_itoa_s(carPos_color[0], txt2, 10);
+    //TextOutA(window.context, 230, 110, txt2, 5);
 
 
     //_itoa_s(game.balls, txt, 10);
@@ -219,25 +228,25 @@ void ProcessInput()
     car.y += movement_y;
 
     
+    movement_speed *= 0.91;
 
-    POINT p;
-    GetCursorPos(&p);
-    ScreenToClient(window.console_handle,&p);
-    //auto carPos_pixel = GetPixel(testDC, p.x, p.y);
-    auto carPos_pixel = GetPixel(testDC, car.x-car.width/2., car.y-car.height/2.);
-    
-    carPos_color[0] = GetRValue(carPos_pixel);
-    carPos_color[1] = GetGValue(carPos_pixel);
-    carPos_color[2] = GetBValue(carPos_pixel);
+    //POINT p;
+    //GetCursorPos(&p);
+    //ScreenToClient(window.console_handle,&p);
+    ////auto carPos_pixel = GetPixel(testDC, p.x, p.y);
+    //auto carPos_pixel = GetPixel(testDC, car.x-car.width/2., car.y-car.height/2.);
+    //
+    //carPos_color[0] = GetRValue(carPos_pixel);
+    //carPos_color[1] = GetGValue(carPos_pixel);
+    //carPos_color[2] = GetBValue(carPos_pixel);
 
-    if (carPos_color[0] * carPos_color[1] * carPos_color[1] == 0)
-    {
-        movement_speed *= 0.59;
-    }
-    else
-    {
-        movement_speed *= 0.99;
-    }
+    //if (carPos_color[0] * carPos_color[1] * carPos_color[1] == 0)
+    //{
+    //    movement_speed *= 0.59;
+    //}
+    //else
+    //{
+    //}
 
 }
 
@@ -288,7 +297,7 @@ void ShowRacketAndBall()
     if (!cpBrush) cpBrush = CreateSolidBrush(RGB(100, 100, 0));
     SelectObject(window.context, cpBrush);
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 19; i++)
     {
         float rad = 5;
         Ellipse(window.context, checkpoint[i].x - rad, checkpoint[i].y - rad, checkpoint[i].x + rad, checkpoint[i].y + rad);
@@ -301,7 +310,7 @@ void ShowRacketAndBall()
     float length = sqrt(coordXdelta * coordXdelta + coordYdelta * coordYdelta);
 
 
-    if (length < 10) {
+    if (length < 19) {
         nextCP_num++;
     }
 }
@@ -405,9 +414,8 @@ void RotateFutureCar() {
 //-------
 void InitWindow()
 {
-    SetProcessDPIAware();
     window.console_handle = CreateWindow("edit", 0, WS_POPUP | WS_VISIBLE | WS_MAXIMIZE, 0, 0, 0, 0, 0, 0, 0, 0);
-
+    
     RECT r;
     GetClientRect(window.console_handle, &r);
     window.device_context = GetDC(window.console_handle);//из хэндла окна достаем хэндл контекста устройства для рисования
@@ -423,12 +431,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_ LPWSTR    lpCmdLine,
     _In_ int       nCmdShow)
+
+
 {
-    
+    SetProcessDPIAware();
     InitWindow();//здесь инициализируем все что нужно для рисования в окне
     InitGame();//здесь инициализируем переменные игры
 
-    mciSendString(TEXT("play ..\\Debug\\music.mp3 repeat"), NULL, 0, NULL);
+
+    //mciSendString(TEXT("play ..\\Debug\\music.mp3 repeat"), NULL, 0, NULL);
     //ShowCursor(NULL);
     
     while (!GetAsyncKeyState(VK_ESCAPE))
