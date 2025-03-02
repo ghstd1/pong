@@ -98,7 +98,7 @@ struct car_ {
 
     void setAngle(float a)
     {
-        sprite.angle = a;
+        sprite.angle = a + 180;
     }
 
     void init()
@@ -135,20 +135,22 @@ struct car_ {
 
 } ;
 
+struct track_ {
+    sprite_ sprite;
+
+    void init() {
+        sprite.Load("racetrack_ps.bmp");
+        sprite.SetDimentionsFromBMP();
+    }
+
+    int chkpt_num = 19;
+
+    POINT chkpts_list[19];
+
+};
+
 car_ car;
-
-
-
-
-
-
-
-struct {
-    int score, balls;//количество набранных очков и оставшихся "жизней"
-    bool action = false;//состояние - ожидание (игрок должен нажать пробел) или игра
-} game;
-
-
+track_ track;
 
 HBITMAP hBack;// хэндл для фонового изображения
 
@@ -172,42 +174,42 @@ void InitGame()
     //пути относительные - файлы должны лежать рядом с .exe 
     //результат работы LoadImageA сохраняет в хэндлах битмапов, рисование спрайтов будет произовдиться с помощью этих хэндлов
 
-    hBack = LoadBMP("racetrack_ps.bmp");
-    track_dms = GetBitmapDimension(hBack);
+    //hBack = LoadBMP("racetrack_ps.bmp");
+    //track_dms = GetBitmapDimension(hBack);
 
-    SetWindowPos(window.console_handle, HWND_TOPMOST, 0, 0, track_dms.x, track_dms.y, SWP_NOMOVE);
-    window.width = track_dms.x;
-    window.height = track_dms.y;
+    //track
+    track.init();
 
-    
+    SetWindowPos(window.console_handle, HWND_TOPMOST, 0, 0, track.sprite.x, track.sprite.y, SWP_NOMOVE);
+    window.width = track.sprite.width;
+    window.height = track.sprite.height;
+
     //checkpoints
-    checkpoint[0].x = 501; checkpoint[0].y = 795; //501, 795
-    checkpoint[1].x = 410; checkpoint[1].y = 733; //410, 733
-    checkpoint[2].x = 237; checkpoint[2].y = 520; //237, 520
-    checkpoint[3].x = 270; checkpoint[3].y = 429; //270, 429
-    checkpoint[4].x = 445; checkpoint[4].y = 381; //445, 381
+    track.chkpts_list[0].x = 501; track.chkpts_list[0].y = 795; //501, 795
+    track.chkpts_list[1].x = 410; track.chkpts_list[1].y = 733; //410, 733
+    track.chkpts_list[2].x = 237; track.chkpts_list[2].y = 520; //237, 520
+    track.chkpts_list[3].x = 270; track.chkpts_list[3].y = 429; //270, 429
+    track.chkpts_list[4].x = 445; track.chkpts_list[4].y = 381; //445, 381
 
-    checkpoint[5].x = 446; checkpoint[5].y = 301; //446, 301
-    checkpoint[6].x = 139; checkpoint[6].y = 272; //139, 272
-    checkpoint[7].x = 84;  checkpoint[7].y = 193; //84, 193
-    checkpoint[8].x = 128; checkpoint[8].y = 121; //128, 121
-    checkpoint[9].x = 463; checkpoint[9].y = 111; //463, 111
+    track.chkpts_list[5].x = 446; track.chkpts_list[5].y = 301; //446, 301
+    track.chkpts_list[6].x = 139; track.chkpts_list[6].y = 272; //139, 272
+    track.chkpts_list[7].x = 84;  track.chkpts_list[7].y = 193; //84, 193
+    track.chkpts_list[8].x = 128; track.chkpts_list[8].y = 121; //128, 121
+    track.chkpts_list[9].x = 463; track.chkpts_list[9].y = 111; //463, 111
 
-    checkpoint[10].x = 538; checkpoint[10].y = 226; //538, 226
-    checkpoint[11].x = 707; checkpoint[11].y = 109; //707, 109
-    checkpoint[12].x = 756; checkpoint[12].y = 182; //756, 182
-    checkpoint[13].x = 706; checkpoint[13].y = 273; //706, 273
-    checkpoint[14].x = 592; checkpoint[14].y = 361; //592, 361
+    track.chkpts_list[10].x = 538; track.chkpts_list[10].y = 226; //538, 226
+    track.chkpts_list[11].x = 707; track.chkpts_list[11].y = 109; //707, 109
+    track.chkpts_list[12].x = 756; track.chkpts_list[12].y = 182; //756, 182
+    track.chkpts_list[13].x = 706; track.chkpts_list[13].y = 273; //706, 273
+    track.chkpts_list[14].x = 592; track.chkpts_list[14].y = 361; //592, 361
 
-    checkpoint[15].x = 560; checkpoint[15].y = 425; //560, 425
-    checkpoint[16].x = 560; checkpoint[16].y = 548; //560, 548
-    checkpoint[17].x = 560; checkpoint[17].y = 548; //611, 709
-    checkpoint[18].x = 587; checkpoint[18].y = 779; //587, 779
+    track.chkpts_list[15].x = 560; track.chkpts_list[15].y = 425; //560, 425
+    track.chkpts_list[16].x = 560; track.chkpts_list[16].y = 548; //560, 548
+    track.chkpts_list[17].x = 560; track.chkpts_list[17].y = 548; //611, 709
+    track.chkpts_list[18].x = 587; track.chkpts_list[18].y = 779; //587, 779
 
     //car
     car.init();
-
-
 }
 
 //void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
@@ -338,7 +340,7 @@ void showCheckpoint()
     if (!addl_cpBrush) addl_cpBrush = CreateSolidBrush(RGB(100, 0, 0));
     SelectObject(window.context, addl_cpBrush);
     float addl_rad = 20;
-    Ellipse(window.context, checkpoint[nextCP_num].x - addl_rad, checkpoint[nextCP_num].y - addl_rad, checkpoint[nextCP_num].x + addl_rad, checkpoint[nextCP_num].y + addl_rad);
+    Ellipse(window.context, track.chkpts_list[nextCP_num].x - addl_rad, track.chkpts_list[nextCP_num].y - addl_rad, track.chkpts_list[nextCP_num].x + addl_rad, track.chkpts_list[nextCP_num].y + addl_rad);
 
     if (!cpBrush) cpBrush = CreateSolidBrush(RGB(100, 100, 0));
     SelectObject(window.context, cpBrush);
@@ -346,13 +348,14 @@ void showCheckpoint()
     for (int i = 0; i < checkpointNum; i++)
     {
         float rad = 5;
-        Ellipse(window.context, checkpoint[i].x - rad, checkpoint[i].y - rad, checkpoint[i].x + rad, checkpoint[i].y + rad);
+        Ellipse(window.context, track.chkpts_list[i].x - rad, track.chkpts_list[i].y - rad, track.chkpts_list[i].x + rad, track.chkpts_list[i].y + rad);
     }
 }
 
 void showScene()
 {
-    ShowBitmap(0, 0, track_dms.x, track_dms.y, hBack);//задний фон
+    //ShowBitmap(0, 0, track_dms.x, track_dms.y, hBack);//задний фон
+    track.sprite.Show();
     showCheckpoint();
     controlChekpoint();
     car.sprite.Show();
