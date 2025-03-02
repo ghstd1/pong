@@ -8,59 +8,22 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <math.h>
+#include <vector>
+
+#include "winAPI_utils.h"
 
 int timeout = 10000;
 int time;
 int currenttime=0;
 int starttime = 0;
 
+int carPos_color[3];
+
 const int checkpointNum = 19;
-POINT checkpoint[checkpointNum];
 
-struct {
-    HWND console_handle;//хэндл окна
-    HDC device_context, context;// два контекста устройства (для буферизации)
-    int width, height;//сюда сохраним размеры окна которое создаст программа
-} window;
-
-void ShowBitmap(int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha = false, bool rotate = false, float angle = 0);
 
 float lerp(float a, float b, float x) {
     return a * (1 - x) + b * x;
-}
-
-void RotatedBlt(HDC hDC, HDC hMemDC, float x, float y, float width, float height, float angle, float bitmapWidth, float bitmapHeight)
-{
-    angle *= 3.141519 / 180.;
-    POINT point[3];
-    point[1].x = -width / 2.; point[1].y = -height / 2.;
-    point[0].x = width / 2; point[0].y = -height / 2.;
-    point[2].x = width / 2; point[2].y = height / 2.;
-
-    for (int i = 0; i < 3; i++)
-    {
-        float x1 = point[i].y * sin(angle) - point[i].x * cos(angle);
-        float y1 = point[i].x * sin(angle) + point[i].y * cos(angle);
-        point[i].x = x + x1 + width / 2.;
-        point[i].y = y + y1 + height / 2.;
-    }
-
-    PlgBlt(hDC, point, hMemDC, 0, 0, bitmapWidth, bitmapHeight, NULL, 0, 0);
-}
-
-HBITMAP LoadBMP(const char* name)
-{
-    return (HBITMAP)LoadImageA(NULL, name, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-}
-
-POINT GetBitmapDimension(HBITMAP bmp) {
-    BITMAP bm;
-    GetObject(bmp, (int)sizeof bm, &bm);
-    POINT dms;
-    dms.x = bm.bmWidth;
-    dms.y = bm.bmHeight;
-
-    return dms;
 }
 
 
@@ -73,9 +36,9 @@ struct sprite_ {
         hBitmap = LoadBMP(name);
     }
 
-    void Show()
+    void Show(bool centered = true)
     {
-        ShowBitmap(x - width / 2., y - height / 2, width, height, hBitmap, false, true, angle);
+        ShowBitmap(x - (centered ? width / 2. : 0.), y - (centered ? height / 2 : 0.), width, height, hBitmap, false, true, angle);
     }
 
     void SetDimentionsFromBMP()
@@ -85,6 +48,83 @@ struct sprite_ {
         height = dim.y;
     }
 };
+
+struct checkPoint_ {
+
+    int nextCP_num = 0;
+
+    const POINT list[checkpointNum] = 
+    {
+        501, 795, //501, 795
+        410, 733, //410, 733
+        237, 520, //237, 520
+        270, 429, //270, 429
+        445, 381, //445, 381
+
+        446, 301, //446, 301
+        139, 272, //139, 272
+        84, 193, //84, 193
+        128, 121, //128, 121
+        463, 111, //463, 111
+
+         538,226, //538, 226
+         707,109, //707, 109
+         756,182, //756, 182
+         706,273, //706, 273
+         592,361, //592, 361
+
+         560,425, //560, 425
+         560,548, //560, 548
+         560,548, //611, 709
+         587,779 //587, 779
+     };
+
+    void Show()
+    {
+        if (!addl_cpBrush) addl_cpBrush = CreateSolidBrush(RGB(100, 0, 0));
+        SelectObject(window.context, addl_cpBrush);
+        float addl_rad = 20;
+        Ellipse(window.context, list[nextCP_num].x - addl_rad, list[nextCP_num].y - addl_rad, list[nextCP_num].x + addl_rad, list[nextCP_num].y + addl_rad);
+
+        if (!cpBrush) cpBrush = CreateSolidBrush(RGB(100, 100, 0));
+        SelectObject(window.context, cpBrush);
+
+        for (int i = 0; i < checkpointNum; i++)
+        {
+            float rad = 5;
+            Ellipse(window.context, list[i].x - rad, list[i].y - rad, list[i].x + rad, list[i].y + rad);
+        }
+    }
+
+    void Control(float x, float y)
+    {
+        float coordXdelta = list[nextCP_num].x - x;
+        float coordYdelta = list[nextCP_num].y - y;
+
+        float length = sqrt(coordXdelta * coordXdelta + coordYdelta * coordYdelta);
+
+        float margin = 19;
+        if (length < margin) {
+
+            timeout += 5000;
+
+            nextCP_num++;
+        }
+    }
+
+};
+
+struct track_ {
+    sprite_ sprite;
+    checkPoint_ checkPoint;
+
+    void init() {
+        sprite.Load("racetrack_ps.bmp");
+        sprite.SetDimentionsFromBMP();
+    }
+};
+
+track_ track;
 
 struct car_ {
 
@@ -98,7 +138,7 @@ struct car_ {
 
     void setAngle(float a)
     {
-        sprite.angle = a + 180;
+        sprite.angle = a;
     }
 
     void init()
@@ -107,8 +147,8 @@ struct car_ {
         sprite.SetDimentionsFromBMP();
         sprite.width /= 4;
         sprite.height /= 4;
-        sprite.x = checkpoint[0].x + 30;
-        sprite.y = checkpoint[0].y + 10;
+        sprite.x = track.checkPoint.list[0].x + 30;
+        sprite.y = track.checkPoint.list[0].y + 10;
     }
 
     void processMovement()
@@ -135,102 +175,33 @@ struct car_ {
 
 } ;
 
-struct track_ {
-    sprite_ sprite;
-
-    void init() {
-        sprite.Load("racetrack_ps.bmp");
-        sprite.SetDimentionsFromBMP();
-    }
-
-    int chkpt_num = 19;
-
-    POINT chkpts_list[19];
-
-};
 
 car_ car;
-track_ track;
-
-HBITMAP hBack;// хэндл для фонового изображения
-
-
-int nextCP_num = 0;
-
-HBRUSH cpBrush;
-HBRUSH addl_cpBrush;
-
-
-//cекция кода
-
-POINT track_dms;
-HDC testDC;
-HDC hTrackDC;
-
 
 void InitGame()
 {
-    //в этой секции загружаем спрайты с помощью функций gdi
-    //пути относительные - файлы должны лежать рядом с .exe 
-    //результат работы LoadImageA сохраняет в хэндлах битмапов, рисование спрайтов будет произовдиться с помощью этих хэндлов
-
-    //hBack = LoadBMP("racetrack_ps.bmp");
-    //track_dms = GetBitmapDimension(hBack);
-
-    //track
     track.init();
+    SetWindowPos(window.console_handle, HWND_TOPMOST, 0, 0, track.sprite.width, track.sprite.height, SWP_NOMOVE);
 
-    SetWindowPos(window.console_handle, HWND_TOPMOST, 0, 0, track.sprite.x, track.sprite.y, SWP_NOMOVE);
+    
     window.width = track.sprite.width;
     window.height = track.sprite.height;
 
-    //checkpoints
-    track.chkpts_list[0].x = 501; track.chkpts_list[0].y = 795; //501, 795
-    track.chkpts_list[1].x = 410; track.chkpts_list[1].y = 733; //410, 733
-    track.chkpts_list[2].x = 237; track.chkpts_list[2].y = 520; //237, 520
-    track.chkpts_list[3].x = 270; track.chkpts_list[3].y = 429; //270, 429
-    track.chkpts_list[4].x = 445; track.chkpts_list[4].y = 381; //445, 381
-
-    track.chkpts_list[5].x = 446; track.chkpts_list[5].y = 301; //446, 301
-    track.chkpts_list[6].x = 139; track.chkpts_list[6].y = 272; //139, 272
-    track.chkpts_list[7].x = 84;  track.chkpts_list[7].y = 193; //84, 193
-    track.chkpts_list[8].x = 128; track.chkpts_list[8].y = 121; //128, 121
-    track.chkpts_list[9].x = 463; track.chkpts_list[9].y = 111; //463, 111
-
-    track.chkpts_list[10].x = 538; track.chkpts_list[10].y = 226; //538, 226
-    track.chkpts_list[11].x = 707; track.chkpts_list[11].y = 109; //707, 109
-    track.chkpts_list[12].x = 756; track.chkpts_list[12].y = 182; //756, 182
-    track.chkpts_list[13].x = 706; track.chkpts_list[13].y = 273; //706, 273
-    track.chkpts_list[14].x = 592; track.chkpts_list[14].y = 361; //592, 361
-
-    track.chkpts_list[15].x = 560; track.chkpts_list[15].y = 425; //560, 425
-    track.chkpts_list[16].x = 560; track.chkpts_list[16].y = 548; //560, 548
-    track.chkpts_list[17].x = 560; track.chkpts_list[17].y = 548; //611, 709
-    track.chkpts_list[18].x = 587; track.chkpts_list[18].y = 779; //587, 779
-
-    //car
     car.init();
 }
-
-//void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
-//{
-//    PlaySound(TEXT(name), NULL, SND_FILENAME | SND_ASYNC);//переменная name содежрит имя файла. флаг ASYNC позволяет проигрывать звук паралельно с исполнением программы
-//}
-
-int carPos_color[3];
 
 void ShowScore()
 {
     //поиграем шрифтами и цветами
     SetTextColor(window.context, RGB(160, 160, 160));
     SetBkColor(window.context, RGB(0, 0, 0));
-    auto hFont = CreateFont(70, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, "CALIBRI");
+    if (!hFont) hFont = CreateFont(70, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, "CALIBRI");
     auto hTmp = (HFONT)SelectObject(window.context, hFont);
 
     char txt[256];//буфер для текста
     char chkpts[] = "Chkpts ";
     char you_won[] = "YOU WON";
-    _itoa_s(nextCP_num, txt, 10);//преобразование числовой переменной в текст. текст окажется в переменной txt
+    _itoa_s(track.checkPoint.nextCP_num, txt, 10);//преобразование числовой переменной в текст. текст окажется в переменной txt
 
     char outstr[255];
     strcpy(outstr, chkpts);
@@ -243,14 +214,10 @@ void ShowScore()
     _itoa(time, time_txt, 10);
     TextOutA(window.context, 400, 10, time_txt, strlen(time_txt));
 
-    if (nextCP_num > 18) {
+    if (track.checkPoint.nextCP_num > 18) {
         TextOutA(window.context, window.width / 2, window.height / 2, you_won, 7);
     }
 }
-
-
-
-
 
 void ProcessInput()
 {
@@ -284,86 +251,14 @@ void ProcessInput()
 
 }
 
-void ShowBitmap(int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha, bool rotate, float angle)
-{
-    HBITMAP hbm, hOldbm;
-    HDC hMemDC;
-    BITMAP bm;
-
-    hMemDC = CreateCompatibleDC(window.context); // Создаем контекст памяти, совместимый с контекстом отображения
-    hOldbm = (HBITMAP)SelectObject(hMemDC, hBitmapBall);// Выбираем изображение bitmap в контекст памяти
-
-    if (hOldbm) // Если не было ошибок, продолжаем работу
-    {
-        GetObject(hBitmapBall, sizeof(BITMAP), (LPSTR)&bm); // Определяем размеры изображения
-
-        if (rotate) {
-
-            RotatedBlt(window.context, hMemDC, x, y, x1, y1, angle, x1, y1);
-
-        }
-        else {
-            if (alpha)
-            {
-                TransparentBlt(window.context, x, y, x1, y1, hMemDC, 0, 0, x1, y1, RGB(0, 0, 0));//все пиксели черного цвета будут интепретированы как прозрачные
-            }
-            else
-            {
-                StretchBlt(window.context, x, y, x1, y1, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY); // Рисуем изображение bitmap
-            }
-        }
-
-        SelectObject(hMemDC, hOldbm);// Восстанавливаем контекст памяти
-    }
-
-    DeleteDC(hMemDC); // Удаляем контекст памяти
-}
-
-void controlChekpoint()
-{
-    float coordXdelta = checkpoint[nextCP_num].x - car.sprite.x;
-    float coordYdelta = checkpoint[nextCP_num].y - car.sprite.y;
-
-    float length = sqrt(coordXdelta * coordXdelta + coordYdelta * coordYdelta);
-
-    float margin = 19;
-    if (length < margin) {
-
-        timeout += 5000;
-
-        nextCP_num++;
-    }
-}
-
-void showCheckpoint()
-{
-    if (!addl_cpBrush) addl_cpBrush = CreateSolidBrush(RGB(100, 0, 0));
-    SelectObject(window.context, addl_cpBrush);
-    float addl_rad = 20;
-    Ellipse(window.context, track.chkpts_list[nextCP_num].x - addl_rad, track.chkpts_list[nextCP_num].y - addl_rad, track.chkpts_list[nextCP_num].x + addl_rad, track.chkpts_list[nextCP_num].y + addl_rad);
-
-    if (!cpBrush) cpBrush = CreateSolidBrush(RGB(100, 100, 0));
-    SelectObject(window.context, cpBrush);
-
-    for (int i = 0; i < checkpointNum; i++)
-    {
-        float rad = 5;
-        Ellipse(window.context, track.chkpts_list[i].x - rad, track.chkpts_list[i].y - rad, track.chkpts_list[i].x + rad, track.chkpts_list[i].y + rad);
-    }
-}
-
 void showScene()
 {
-    //ShowBitmap(0, 0, track_dms.x, track_dms.y, hBack);//задний фон
-    track.sprite.Show();
-    showCheckpoint();
-    controlChekpoint();
+    track.sprite.Show(false);
+    track.checkPoint.Show();
+    track.checkPoint.Control(car.sprite.x, car.sprite.y);
     car.sprite.Show();
 }
 
-
-
-//-------
 void InitWindow()
 {
     window.console_handle = CreateWindow("edit", 0, WS_POPUP | WS_VISIBLE | WS_MAXIMIZE, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -398,7 +293,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         currenttime = timeGetTime()-starttime;
         time = timeout - currenttime;
         showScene();//рисуем фон, ракетку и шарик
-        ShowScore();//рисуем очик и жизни
+        //ShowScore();//рисуем очик и жизни
         
         BitBlt(window.device_context, 0, 0, window.width, window.height, window.context, 0, 0, SRCCOPY);//копируем буфер в окно
         Sleep(16);//ждем 16 милисекунд (1/количество кадров в секунду)
