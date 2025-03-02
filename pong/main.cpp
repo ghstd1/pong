@@ -126,8 +126,8 @@ struct track_ {
 
 track_ track;
 
-struct car_ {
-
+class car_ {
+public:
     sprite_ sprite;
 
     float rotate_speed = 0;
@@ -136,20 +136,20 @@ struct car_ {
     float movement_y = 0;
     float max_speed = 7;
 
-    void setAngle(float a)
-    {
-        sprite.angle = a;
-    }
-
-    void init()
-    {
-        sprite.Load("car.bmp");
+     car_(const char* name) {
+        sprite.Load(name);
         sprite.SetDimentionsFromBMP();
         sprite.width /= 4;
         sprite.height /= 4;
         sprite.x = track.checkPoint.list[0].x + 30;
         sprite.y = track.checkPoint.list[0].y + 10;
     }
+
+    void setAngle(float a)
+    {
+        sprite.angle = a;
+    }
+
 
     void processMovement()
     {
@@ -176,7 +176,7 @@ struct car_ {
 } ;
 
 
-car_ car;
+car_ car("car.bmp");
 
 void InitGame()
 {
@@ -187,7 +187,7 @@ void InitGame()
     window.width = track.sprite.width;
     window.height = track.sprite.height;
 
-    car.init();
+    
 }
 
 void ShowScore()
