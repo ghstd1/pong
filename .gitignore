@@ -361,3 +361,23 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/.vs/pong/v17/.suo
+/.vs/pong/v17/Browse.VC.db
+/.vs/pong/v17/DocumentLayout.backup.json
+/.vs/pong/v17/DocumentLayout.json
+/Debug/pong.exe
+/Debug/pong.pdb
+/pong/Debug/pong.exe.recipe
+/pong/Debug/pong.ilk
+/pong/Debug/pong.log
+/pong/Debug/pong.tlog/CL.command.1.tlog
+/pong/Debug/pong.tlog/Cl.items.tlog
+/pong/Debug/pong.tlog/CL.read.1.tlog
+/pong/Debug/pong.tlog/CL.write.1.tlog
+/pong/Debug/pong.tlog/link.command.1.tlog
+/pong/Debug/pong.tlog/link.read.1.tlog
+/pong/Debug/pong.tlog/link.secondary.1.tlog
+/pong/Debug/pong.tlog/link.write.1.tlog
+/pong/Debug/pong.tlog/pong.lastbuildstate
+/pong/Debug/vc143.idb
+/pong/Debug/vc143.pdb
